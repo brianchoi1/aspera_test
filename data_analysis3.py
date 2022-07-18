@@ -1,7 +1,9 @@
 import os, multiprocessing, time
+from click import style
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
+import numpy as np
 
 path = './dist/v2_data'
 def sorted_ls(path):
@@ -57,30 +59,41 @@ def dict_maker(name):
     DATA = {"id" : id_list, "from_to" : from_to_list, "time" : time_list, "duration" : duration_list, "from" : from_list, "to" : to_list, "year" : year_list, "month" : month_list, "day" : day_list, "hour" : hour_list, "min" : min_list}
     return DATA
 
+def graph_func(month_groups, max_duration):
+    for cw_pt in month_groups:
+        plt.figure(figsize=(8,5))
+        plt.rc('xtick', labelsize=6)
+        plt.rc('ytick', labelsize=6)
+        plt.ylim(0, int(max_duration))
+        plt.yticks(np.arange(0, int(max_duration), 50))
+        plt.ylabel('Duration(s)', style = 'italic')
+        plt.title('aspera test   ' + cw_pt[1]["from_to"].iloc[0] + '/' + cw_pt[0][0] + '/' + cw_pt[0][1], style = 'italic')
+        plt.scatter(cw_pt[1]["hour"] + ':' + cw_pt[1]["min"], cw_pt[1]["duration"])
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y')
+        max_y = cw_pt[1]["duration"].max()
+        max_id = cw_pt[1]["duration"].idxmax()
+        max_refered_x = cw_pt[1].loc[max_id, "hour"] + ':' + cw_pt[1].loc[max_id, "min"] 
+        plt.text(max_refered_x, max_y, str(max_y), color='r', horizontalalignment='center', verticalalignment='bottom')
+        plt.savefig(cw_pt[1]["from_to"].iloc[0] + '_' + cw_pt[1]["month"].iloc[0] + '_' + cw_pt[1]["day"].iloc[0] + '.png')
+    # plt.show()
+
 CW_PT_DATA = dict_maker(CW_PT_file_list)
 PT_CW_DATA = dict_maker(PT_CW_file_list)
 CW_PT_DF = pd.DataFrame(CW_PT_DATA)  #dict to dataframe
 PT_CW_DF = pd.DataFrame(PT_CW_DATA)
+CW_max_duration = CW_PT_DF["duration"].max()
+PT_max_duration = PT_CW_DF["duration"].max()
 # ddq = CW_PT_DF[['time', 'duration']]
 # dq = ddq.loc[0:50,:]
 
 cw_pt_month_groups = CW_PT_DF.groupby(['month', 'day'])
 pt_pt_month_groups = PT_CW_DF.groupby(['month', 'day'])
-for cw_pt in cw_pt_month_groups:
-    plt.figure(figsize=(25,25))
-    plt.rc('xtick', labelsize=5)
-    plt.scatter(cw_pt[1]["time"], cw_pt[1]["duration"])
-    plt.xticks(rotation=45)
-    print(cw_pt[1]["time"])
-plt.show()
 
-# for pt_cw in pt_pt_month_groups:
-#     plt.figure(figsize=(25,25))
-#     plt.rc('xtick', labelsize=5)
-#     plt.scatter(pt_cw[1]["time"], pt_cw[1]["duration"])
-#     plt.xticks(rotation=45)
-#     print(pt_cw[1]["time"])
-# plt.show()
+graph_func(cw_pt_month_groups, CW_max_duration)
+graph_func(pt_pt_month_groups, CW_max_duration)
+
+print('dd')
 
 # result_month = dict(list(month_groups))
 # month_list = list(result_month.keys())
@@ -122,4 +135,3 @@ plt.show()
 # plt.show()
 
 
-print('dd')
